@@ -1,0 +1,32 @@
+name: Smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: 0
+      CI: true
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        uses: bahmutov/npm-install@v1
+      - name: Install Playwright
+        run: npx playwright install chromium --with-deps
+      - name: Run Playwright tests
+        run: xvfb-run npm run test
+        env:
+          AUTH_COOKIE: ${{ secrets.AUTH_COOKIE }}
+          METAMASK_SEED_PHRASE: ${{ secrets.METAMASK_SEED_PHRASE }}
+          METAMASK_PASSWORD: ${{ secrets.METAMASK_PASSWORD }}
+          APP_HOST: "https://dev.takeus.io"
+      - uses: actions/upload-artifact@v3
+        if: ${{ failure() }}
+        with:
+          name: test-results
+          path: test-results
